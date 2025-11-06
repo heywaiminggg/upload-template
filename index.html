@@ -3,13 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Standardised Upload → Layout (MVP)</title>
-  <!-- Tailwind CDN (for quick styling) -->
+  <title>SOP Builder – Upload to Standard Format</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- html2canvas for image export -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
-    /* Lock A4-ish aspect for the output card */
     .a4 { aspect-ratio: 210 / 297; }
     .shadow-soft { box-shadow: 0 10px 30px rgba(0,0,0,.08); }
     .washi {
@@ -23,53 +20,41 @@
 <body class="min-h-screen bg-stone-100">
   <div class="max-w-7xl mx-auto p-6 lg:p-10">
     <header class="mb-6">
-      <h1 class="text-2xl md:text-3xl font-bold text-stone-800">Standardised Upload → Layout (MVP)</h1>
-      <p class="text-stone-600">Upload images + text and render them into a fixed, brand-style template. Export as PNG.</p>
+      <h1 class="text-2xl md:text-3xl font-bold text-stone-800">SOP Builder → Standardised Template</h1>
+      <p class="text-stone-600">Create SOP pages with steps. Each step has media (image/video) + text. Export the result as a PNG.</p>
     </header>
 
-    <!-- Controls -->
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <!-- INPUT PANEL -->
       <form id="inputForm" class="bg-white rounded-2xl shadow-soft p-5 border border-stone-200">
         <h2 class="text-lg font-semibold mb-4">Input</h2>
 
-        <!-- Text fields -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <label class="block">
+          <label class="block md:col-span-2">
             <span class="text-sm text-stone-600">Title</span>
-            <input id="title" type="text" class="mt-1 w-full rounded-xl border-stone-300 focus:border-stone-400 focus:ring-stone-400" placeholder="e.g., New Product Launch" />
-          </label>
-          <label class="block">
-            <span class="text-sm text-stone-600">Subtitle</span>
-            <input id="subtitle" type="text" class="mt-1 w-full rounded-xl border-stone-300 focus:border-stone-400 focus:ring-stone-400" placeholder="Short tagline" />
+            <input id="title" type="text" class="mt-1 w-full rounded-xl border-stone-300 focus:border-stone-400 focus:ring-stone-400" placeholder="e.g., Flushing Sump Pit" />
           </label>
           <label class="block md:col-span-2">
-            <span class="text-sm text-stone-600">Body (max 400 chars)</span>
-            <textarea id="body" maxlength="400" rows="4" class="mt-1 w-full rounded-xl border-stone-300 focus:border-stone-400 focus:ring-stone-400" placeholder="Key details, bullet points, or description…"></textarea>
+            <span class="text-sm text-stone-600">Body (Description)</span>
+            <textarea id="body" rows="3" class="mt-1 w-full rounded-xl border-stone-300 focus:border-stone-400 focus:ring-stone-400" placeholder="Overall description of the SOP..."></textarea>
           </label>
           <label class="block">
-            <span class="text-sm text-stone-600">Date</span>
+            <span class="text-sm text-stone-600">Date of SOP</span>
             <input id="date" type="date" class="mt-1 w-full rounded-xl border-stone-300 focus:border-stone-400 focus:ring-stone-400" />
           </label>
           <label class="block">
             <span class="text-sm text-stone-600">Tags (comma-separated)</span>
-            <input id="tags" type="text" class="mt-1 w-full rounded-xl border-stone-300 focus:border-stone-400 focus:ring-stone-400" placeholder="e.g., Bakery, Limited, Hojicha" />
+            <input id="tags" type="text" class="mt-1 w-full rounded-xl border-stone-300 focus:border-stone-400 focus:ring-stone-400" placeholder="e.g., Cleaning, Kitchen" />
           </label>
         </div>
 
-        <!-- Image inputs -->
-        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <span class="text-sm text-stone-600">Hero Image</span>
-            <input id="imgHero" type="file" accept="image/*" class="mt-1 w-full text-sm" />
+        <!-- Steps Builder -->
+        <div class="mt-6">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold">Steps</h3>
+            <button id="addStepBtn" type="button" class="px-3 py-1.5 rounded-xl bg-stone-800 text-white text-sm hover:bg-stone-700">+ Add Step</button>
           </div>
-          <div>
-            <span class="text-sm text-stone-600">Secondary Image 1</span>
-            <input id="imgA" type="file" accept="image/*" class="mt-1 w-full text-sm" />
-          </div>
-          <div>
-            <span class="text-sm text-stone-600">Secondary Image 2</span>
-            <input id="imgB" type="file" accept="image/*" class="mt-1 w-full text-sm" />
-          </div>
+          <div id="stepsContainer" class="space-y-4"></div>
         </div>
 
         <div class="flex flex-wrap items-center gap-3 mt-6">
@@ -78,53 +63,34 @@
         </div>
       </form>
 
-      <!-- Output / Template -->
+      <!-- OUTPUT PANEL -->
       <div class="space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-semibold">Output Template</h2>
           <button id="downloadBtn" class="px-4 py-2 rounded-xl bg-emerald-700 text-white hover:bg-emerald-600">Download PNG</button>
         </div>
 
-        <!-- The standardised card -->
+        <!-- SOP Card A4 -->
         <div id="card" class="a4 relative overflow-hidden rounded-2xl border border-stone-300 bg-[#f7f4ea] washi shadow-soft">
           <!-- Top banner -->
           <div class="absolute inset-x-0 top-0 h-6 bg-stone-800"></div>
 
-          <div class="p-6 md:p-8 space-y-4">
+          <div class="p-6 md:p-8 space-y-5">
             <!-- Header -->
             <div class="flex items-start gap-4">
               <div class="h-12 w-12 rounded-xl bg-stone-800"></div>
               <div class="flex-1">
-                <h3 id="outTitle" class="text-xl md:text-2xl font-bold text-stone-900">Title</h3>
-                <p id="outSubtitle" class="text-stone-700">Subtitle</p>
+                <h3 id="outTitle" class="text-xl md:text-2xl font-bold text-stone-900">SOP Title</h3>
+                <p id="outBodyLead" class="text-stone-700">Short description of the SOP.</p>
               </div>
               <div class="text-right text-sm text-stone-600">
                 <p id="outDate">—</p>
+                <div id="outTags" class="flex flex-wrap gap-1 justify-end mt-1"></div>
               </div>
             </div>
 
-            <!-- Hero image -->
-            <div class="rounded-2xl overflow-hidden border border-stone-300 bg-white">
-              <img id="outHero" alt="Hero" class="w-full h-56 md:h-72 object-cover" />
-            </div>
-
-            <!-- Body -->
-            <div class="bg-white/70 rounded-2xl p-4 border border-stone-200">
-              <p id="outBody" class="text-stone-800 leading-relaxed whitespace-pre-wrap">Body text will appear here.</p>
-            </div>
-
-            <!-- Secondary images -->
-            <div class="grid grid-cols-2 gap-4">
-              <div class="rounded-xl overflow-hidden border border-stone-300 bg-white">
-                <img id="outA" alt="Image A" class="w-full h-40 object-cover" />
-              </div>
-              <div class="rounded-xl overflow-hidden border border-stone-300 bg-white">
-                <img id="outB" alt="Image B" class="w-full h-40 object-cover" />
-              </div>
-            </div>
-
-            <!-- Tags -->
-            <div id="outTags" class="flex flex-wrap gap-2"></div>
+            <!-- Steps Rendered Here -->
+            <div id="outSteps" class="space-y-6"></div>
           </div>
 
           <!-- Bottom banner -->
@@ -134,68 +100,171 @@
     </section>
 
     <footer class="mt-8 text-xs text-stone-500">
-      <p>Tip: This MVP renders client-side. For a production system, add authentication, file storage (e.g., S3/Cloudinary), a database for submissions, and server-side PDF generation (e.g., Puppeteer).</p>
+      <p>Tip: Client-side MVP. For production, use Cloudinary/S3 for uploads and server-side PDF rendering.</p>
     </footer>
   </div>
 
   <script>
     const el = (id) => document.getElementById(id);
 
-    const readImage = (file, targetImg) => new Promise((resolve) => {
-      if (!file) { targetImg.removeAttribute('src'); return resolve(); }
+    // --- Step UI builder ---
+    let stepCount = 0;
+    const stepsContainer = el('stepsContainer');
+
+    function addStep(initialText = '') {
+      stepCount += 1;
+      const wrap = document.createElement('div');
+      wrap.className = 'step-block border border-stone-200 rounded-xl p-4';
+      wrap.dataset.index = String(stepCount);
+
+      wrap.innerHTML = `
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <div class="h-8 w-8 flex items-center justify-center rounded-full bg-stone-800 text-white text-sm font-bold">${stepCount}</div>
+            <div class="text-sm text-stone-600">Step ${stepCount}</div>
+          </div>
+          <button type="button" class="remove-step text-sm text-stone-600 hover:text-red-600">Remove</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+          <label class="block md:col-span-1">
+            <span class="text-sm text-stone-600">Image/Video</span>
+            <input type="file" accept="image/*,video/*" class="mt-1 w-full text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-stone-800 file:text-white" />
+          </label>
+          <label class="block md:col-span-2">
+            <span class="text-sm text-stone-600">Text for Step ${stepCount}</span>
+            <textarea rows="3" class="mt-1 w-full rounded-xl border-stone-300 focus:border-stone-400 focus:ring-stone-400" placeholder="Describe what to do in this step..."></textarea>
+          </label>
+        </div>
+      `;
+
+      // Remove handler
+      wrap.querySelector('.remove-step').addEventListener('click', () => {
+        wrap.remove();
+        renumberSteps();
+      });
+
+      stepsContainer.appendChild(wrap);
+    }
+
+    function renumberSteps() {
+      const blocks = [...document.querySelectorAll('.step-block')];
+      blocks.forEach((block, idx) => {
+        block.dataset.index = String(idx + 1);
+        block.querySelector('.h-8.w-8').textContent = String(idx + 1);
+        block.querySelector('.text-sm.text-stone-600').textContent = `Step ${idx + 1}`;
+        block.querySelector('label:nth-child(2) span').textContent = `Text for Step ${idx + 1}`;
+      });
+      stepCount = blocks.length;
+    }
+
+    // --- Media reader ---
+    const readMedia = (file) => new Promise((resolve) => {
+      if (!file) return resolve(null);
       const reader = new FileReader();
-      reader.onload = (e) => { targetImg.src = e.target.result; resolve(); };
+      reader.onload = (e) => resolve({ url: e.target.result, type: file.type.startsWith('video') ? 'video' : 'image' });
       reader.readAsDataURL(file);
     });
 
-    const apply = async () => {
-      el('outTitle').textContent = el('title').value || 'Untitled';
-      el('outSubtitle').textContent = el('subtitle').value || '';
-      el('outBody').textContent = el('body').value || '';
-
-      const dateVal = el('date').value;
-      el('outDate').textContent = dateVal ? new Date(dateVal).toLocaleDateString() : '—';
+    // --- Apply to template ---
+    async function applyToTemplate() {
+      el('outTitle').textContent = el('title').value || 'Untitled SOP';
+      el('outBodyLead').textContent = el('body').value || '';
+      el('outDate').textContent = el('date').value ? new Date(el('date').value).toLocaleDateString() : '—';
 
       // Tags
       const tagsWrap = el('outTags');
       tagsWrap.innerHTML = '';
-      const parts = (el('tags').value || '').split(',').map(t => t.trim()).filter(Boolean);
-      parts.forEach(t => {
+      (el('tags').value || '').split(',').map(t => t.trim()).filter(Boolean).forEach(t => {
         const sp = document.createElement('span');
-        sp.className = 'px-3 py-1 rounded-full text-xs border border-stone-300 bg-white/80';
+        sp.className = 'px-2 py-0.5 rounded-full text-[11px] border border-stone-300 bg-white/80';
         sp.textContent = t;
         tagsWrap.appendChild(sp);
       });
 
-      // Images
-      await readImage(el('imgHero').files[0], el('outHero'));
-      await readImage(el('imgA').files[0], el('outA'));
-      await readImage(el('imgB').files[0], el('outB'));
-    };
+      const outSteps = el('outSteps');
+      outSteps.innerHTML = '';
 
-    const resetAll = () => {
-      el('inputForm').reset();
-      el('outTitle').textContent = 'Title';
-      el('outSubtitle').textContent = 'Subtitle';
-      el('outBody').textContent = 'Body text will appear here.';
-      el('outDate').textContent = '—';
-      el('outTags').innerHTML = '';
-      ['outHero','outA','outB'].forEach(id => el(id).removeAttribute('src'));
+      const blocks = [...document.querySelectorAll('.step-block')];
+      for (let i = 0; i < blocks.length; i++) {
+        const idx = i + 1;
+        const fileInput = blocks[i].querySelector('input[type="file"]');
+        const textInput = blocks[i].querySelector('textarea');
+        const media = await readMedia(fileInput.files[0]);
+        const text = textInput.value || '';
+
+        const row = document.createElement('div');
+        row.className = 'grid grid-cols-1 md:grid-cols-12 gap-4 items-start';
+
+        // Number badge and title
+        const num = document.createElement('div');
+        num.className = 'md:col-span-1';
+        num.innerHTML = `<div class='h-8 w-8 flex items-center justify-center rounded-full bg-stone-800 text-white font-bold'>${idx}</div>`;
+        row.appendChild(num);
+
+        // Media
+        const mediaCol = document.createElement('div');
+        mediaCol.className = 'md:col-span-4';
+        const mediaWrap = document.createElement('div');
+        mediaWrap.className = 'rounded-xl overflow-hidden border border-stone-300 bg-white';
+        if (media) {
+          if (media.type === 'video') {
+            const v = document.createElement('video');
+            v.src = media.url; v.controls = true; v.className = 'w-full h-40 object-cover';
+            mediaWrap.appendChild(v);
+          } else {
+            const img = document.createElement('img');
+            img.src = media.url; img.alt = `Step ${idx}`; img.className = 'w-full h-40 object-cover';
+            mediaWrap.appendChild(img);
+          }
+        } else {
+          mediaWrap.classList.add('h-40','flex','items-center','justify-center','text-stone-400');
+          mediaWrap.textContent = 'No media';
+        }
+        mediaCol.appendChild(mediaWrap);
+        row.appendChild(mediaCol);
+
+        // Text
+        const textCol = document.createElement('div');
+        textCol.className = 'md:col-span-7';
+        const textBox = document.createElement('div');
+        textBox.className = 'bg-white/70 rounded-2xl p-4 border border-stone-200';
+        textBox.textContent = text || '—';
+        row.appendChild(textCol);
+        textCol.appendChild(textBox);
+
+        outSteps.appendChild(row);
+      }
     }
 
-    const downloadPNG = async () => {
+    function resetAll() {
+      el('inputForm').reset();
+      stepsContainer.innerHTML = '';
+      stepCount = 0;
+      addStep();
+      el('outTitle').textContent = 'SOP Title';
+      el('outBodyLead').textContent = 'Short description of the SOP.';
+      el('outDate').textContent = '—';
+      el('outTags').innerHTML = '';
+      el('outSteps').innerHTML = '';
+    }
+
+    async function downloadPNG() {
       const node = el('card');
-      // Render at 2x for sharper export
       const canvas = await html2canvas(node, { scale: 2, backgroundColor: null });
       const link = document.createElement('a');
-      link.download = `standard-card-${Date.now()}.png`;
+      link.download = `sop-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
-    };
+    }
 
-    el('applyBtn').addEventListener('click', apply);
-    el('resetBtn').addEventListener('click', resetAll);
-    el('downloadBtn').addEventListener('click', downloadPNG);
+    // Init
+    document.addEventListener('DOMContentLoaded', () => {
+      addStep();
+      el('addStepBtn').addEventListener('click', () => addStep());
+      el('applyBtn').addEventListener('click', applyToTemplate);
+      el('resetBtn').addEventListener('click', resetAll);
+      el('downloadBtn').addEventListener('click', downloadPNG);
+    });
   </script>
 </body>
 </html>
